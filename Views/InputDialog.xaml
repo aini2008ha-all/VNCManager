@@ -1,0 +1,22 @@
+<Window x:Class="VNCManager.Views.InputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="输入" Width="420" Height="200"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        Background="{StaticResource WindowBackground}">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="PromptText" FontSize="14" Foreground="{StaticResource PrimaryText}"
+                   TextWrapping="Wrap" Margin="0,0,0,12"/>
+        <TextBox x:Name="InputBox" Grid.Row="1" Style="{StaticResource InputBox}" Height="36"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <Button Content="取消" Click="CancelClick" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
+            <Button Content="确定" Click="OkClick" Style="{StaticResource PrimaryButton}" IsDefault="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

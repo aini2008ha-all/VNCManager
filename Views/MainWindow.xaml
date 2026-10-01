@@ -1,0 +1,354 @@
+<Window x:Class="VNCManager.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="远程连接管理器"
+        Width="1280" Height="800"
+        MinWidth="1000" MinHeight="650"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBackground}"
+        Closing="Window_Closing" StateChanged="Window_StateChanged">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="{StaticResource SidebarBackground}">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top" Margin="22,24,22,14">
+                    <TextBlock Text="远程" FontSize="26" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="连接管理器" FontSize="12" FontWeight="SemiBold"
+                               Foreground="#9AA7B8" Margin="2,2,0,0"/>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom" Margin="14,8,14,16">
+                    <Border Background="#263142" CornerRadius="10" Padding="14,12">
+                        <StackPanel>
+                            <TextBlock Text="设备统计" Foreground="#93A0B3" FontSize="12"/>
+                            <TextBlock Margin="0,8,0,0" Foreground="White" FontSize="20" FontWeight="SemiBold">
+                                <Run Text="{Binding DeviceCount, Mode=OneWay}"/> 台设备
+                            </TextBlock>
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBlock Foreground="#7FD69B" FontSize="13" Margin="0,0,16,0">
+                                    <Run Text="● "/><Run Text="{Binding OnlineCount, Mode=OneWay}"/> 在线
+                                </TextBlock>
+                                <TextBlock Foreground="#FF9A9A" FontSize="13">
+                                    <Run Text="● "/><Run Text="{Binding OfflineCount, Mode=OneWay}"/> 离线
+                                </TextBlock>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Text="远程连接管理器 1.4" Foreground="#687487" FontSize="11" Margin="4,12,0,0"/>
+                    <TextBlock Text="by 52pojie@aini2008ha" Foreground="#5A6578" FontSize="10" Margin="4,4,0,0"/>
+                </StackPanel>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,0,4" Style="{StaticResource SidebarScrollViewer}">
+                    <StackPanel Margin="12,0,12,8">
+                        <TextBlock Text="设备" Style="{StaticResource SidebarSection}"/>
+                        <Button Tag="全部设备" Click="GroupClick" Style="{StaticResource NavButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="▦" Width="28"/><TextBlock Text="所有设备"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Tag="收藏" Click="GroupClick" Style="{StaticResource NavButton}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="☆" Width="28"/><TextBlock Text="收藏"/>
+                            </StackPanel>
+                        </Button>
+
+                        <DockPanel Margin="12,22,4,5">
+                            <TextBlock Text="分组" Style="{StaticResource SidebarSection}" Margin="0"
+                                       DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="+" Command="{Binding AddGroupCommand}"
+                                        ToolTip="新建分组" FontSize="16" FontWeight="Bold"
+                                        Width="28" Height="28" Padding="0"
+                                        Foreground="#D8DEE8" Background="#2A3548" BorderThickness="0"
+                                        Cursor="Hand" Margin="0,0,4,0"/>
+                                <Button Content="-" Command="{Binding RemoveGroupCommand}"
+                                        ToolTip="删除选中分组" FontSize="16" FontWeight="Bold"
+                                        Width="28" Height="28" Padding="0"
+                                        Foreground="#D8DEE8" Background="#2A3548" BorderThickness="0"
+                                        Cursor="Hand"/>
+                            </StackPanel>
+                        </DockPanel>
+
+                        <ListBox ItemsSource="{Binding ManagedGroups}"
+                                 SelectedItem="{Binding SelectedGroupInfo}"
+                                 Background="Transparent" BorderThickness="0" Foreground="#D8DEE8"
+                                 MouseRightButtonUp="GroupListRightClick">
+                            <ListBox.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="编辑分组（名称/排序）" Click="GroupEditMenuClick"/>
+                                    <MenuItem Header="删除分组" Click="GroupDeleteMenuClick"/>
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="10,9"/>
+                                    <Setter Property="Margin" Value="0,2"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayName, Mode=OneWay}" FontSize="14"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <DockPanel Margin="12,22,4,5">
+                            <TextBlock Text="最近连接" Style="{StaticResource SidebarSection}" Margin="0"
+                                       DockPanel.Dock="Left" VerticalAlignment="Center"/>
+                            <Button Content="清空" Command="{Binding ClearRecentCommand}"
+                                    ToolTip="清空全部最近连接"
+                                    FontSize="11" Padding="6,2" HorizontalAlignment="Right"
+                                    Foreground="#9AA7B8" Background="Transparent" BorderThickness="0" Cursor="Hand"/>
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding RecentConnections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,1">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Button Click="RecentClick" Tag="{Binding}"
+                                                Style="{StaticResource NavButton}" Padding="10,7">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name, Mode=OneWay}" FontSize="13" Foreground="#D8DEE8"/>
+                                                <TextBlock FontSize="11" Foreground="#687487">
+                                                    <Run Text="{Binding Host, Mode=OneWay}"/>
+                                                    <Run Text=" · "/>
+                                                    <Run Text="{Binding Time, StringFormat=MM-dd HH:mm, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button Grid.Column="1" Content="×" Tag="{Binding}"
+                                                Click="RemoveRecentClick" ToolTip="删除此记录"
+                                                Width="24" Height="24" FontSize="12" Padding="0"
+                                                Foreground="#9AA7B8" Background="Transparent"
+                                                BorderThickness="0" Cursor="Hand" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- Main -->
+        <Grid Grid.Column="1" Margin="28,24,28,22">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <StackPanel>
+                    <TextBlock Text="我的连接" FontSize="27" FontWeight="SemiBold"
+                               Foreground="{StaticResource PrimaryText}"/>
+                    <TextBlock Text="集中管理 VNC 与 Windows 远程桌面（RDP）设备"
+                               Foreground="{StaticResource SecondaryText}" Margin="0,5,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="导入" Command="{Binding ImportCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="导出" Command="{Binding ExportCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="设置" Command="{Binding SettingsCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="日志" Command="{Binding LogsCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="{Binding ViewModeButtonText}" Command="{Binding ToggleViewCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="检查在线状态" Command="{Binding CheckAllCommand}"
+                            Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="+  添加设备" Command="{Binding AddCommand}"
+                            Style="{StaticResource PrimaryButton}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Search + batch bar -->
+            <Grid Grid.Row="1" Margin="0,18,0,0">
+                <Border Style="{StaticResource SearchBox}" HorizontalAlignment="Left" Width="360">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="🔍" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#8994A5"/>
+                        <TextBox Grid.Column="1" x:Name="SearchBox"
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                 BorderThickness="0" Background="Transparent" FontSize="14"
+                                 VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Batch toolbar -->
+            <Border Grid.Row="2" Margin="0,12,0,0" Padding="12,8" Background="#EEF2F7" CornerRadius="8"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BoolVisibilityConverter}}">
+                <DockPanel>
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <TextBlock VerticalAlignment="Center" Margin="0,0,16,0" Foreground="#344054">
+                            <Run Text="已选 "/><Run Text="{Binding SelectedCount, Mode=OneWay}"/><Run Text=" 台"/>
+                        </TextBlock>
+                        <Button Content="批量检测" Command="{Binding BatchCheckCommand}"
+                                Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="12,6"/>
+                        <Button Content="改分组" Command="{Binding BatchGroupCommand}"
+                                Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Padding="12,6"/>
+                        <Button Content="删除" Command="{Binding BatchDeleteCommand}"
+                                Style="{StaticResource SecondaryButton}" Padding="12,6"/>
+                    </StackPanel>
+                    <CheckBox Content="全选当前列表" IsChecked="{Binding SelectAll}"
+                              VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                </DockPanel>
+            </Border>
+
+            <!-- 连接列表：卡片 / 列表模式 -->
+            <ScrollViewer Grid.Row="3" Margin="0,14,0,0" VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding IsCardView, Converter={StaticResource BoolVisibilityConverter}}">
+                <ItemsControl x:Name="DeviceList">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource DeviceCard}" Width="360" MinHeight="120"
+                                    Tag="{Binding}" MouseLeftButtonDown="CardMouseDown">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox Grid.Column="0" Grid.RowSpan="3" IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                              VerticalAlignment="Top" Margin="0,4,10,0"
+                                              Checked="SelectionChanged" Unchecked="SelectionChanged"/>
+                                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,8,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Width="10" Height="10" CornerRadius="5" Margin="0,6,8,0"
+                                                    VerticalAlignment="Center" Background="{Binding Status, Converter={StaticResource StatusBrushConverter}}"/>
+                                            <Border Background="#E8EEF9" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#2563EB">
+                                                    <Run Text="{Binding TypeIcon, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding TypeLabel, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </Border>
+                                            <TextBlock Text="{Binding Name, Mode=OneWay}" FontSize="15" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource PrimaryText}" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="160"/>
+                                            <TextBlock Text=" ★" Foreground="#E3A62F" VerticalAlignment="Center"
+                                                       Visibility="{Binding Favorite, Converter={StaticResource BoolVisibilityConverter}}"/>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Address, Mode=OneWay}" FontSize="13" Foreground="#58709A" Margin="18,5,0,0"/>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Grid.Row="0" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding StatusText, Mode=OneWay}" FontSize="12" HorizontalAlignment="Right"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusBrushConverter}}"/>
+                                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                            <Button Content="连接" Tag="{Binding}" Click="ConnectClick" Style="{StaticResource SmallPrimaryButton}"/>
+                                            <Button Content="⋮" Tag="{Binding}" Click="MoreClick" Style="{StaticResource MoreButton}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding Comment, Mode=OneWay}" FontSize="12"
+                                               Foreground="{StaticResource SecondaryText}" Margin="18,8,0,0" TextWrapping="Wrap"
+                                               MaxHeight="48" TextTrimming="CharacterEllipsis" ToolTip="{Binding Comment, Mode=OneWay}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" FontSize="11" Foreground="#8994A5" Margin="18,6,0,0">
+                                        <Run Text="在线 "/><Run Text="{Binding LastOnlineText, Mode=OneWay}"/>
+                                        <Run Text="  ·  连接 "/><Run Text="{Binding LastConnectedText, Mode=OneWay}"/>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Border Grid.Row="3" Margin="0,14,0,0" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" CornerRadius="10"
+                    Visibility="{Binding IsListView, Converter={StaticResource BoolVisibilityConverter}}">
+                <ListView x:Name="DeviceTable" ItemsSource="{Binding FilteredDevices}" BorderThickness="0" Background="Transparent"
+                          MouseDoubleClick="ListMouseDoubleClick" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListView.View>
+                        <GridView AllowsColumnReorder="False">
+                            <GridViewColumn Header="" Width="42">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate><CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" Checked="SelectionChanged" Unchecked="SelectionChanged" HorizontalAlignment="Center"/></DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="名称" Width="190" DisplayMemberBinding="{Binding Name, Mode=OneWay}"/>
+                            <GridViewColumn Header="地址" Width="180" DisplayMemberBinding="{Binding Address, Mode=OneWay}"/>
+                            <GridViewColumn Header="类型" Width="70" DisplayMemberBinding="{Binding TypeLabel, Mode=OneWay}"/>
+                            <GridViewColumn Header="状态" Width="105" DisplayMemberBinding="{Binding StatusText, Mode=OneWay}"/>
+                            <GridViewColumn Header="备注" Width="220" DisplayMemberBinding="{Binding Comment, Mode=OneWay}"/>
+                            <GridViewColumn Header="操作" Width="110">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="连接" Tag="{Binding}" Click="ConnectClick" Style="{StaticResource SmallPrimaryButton}"/>
+                                            <Button Content="⋮" Tag="{Binding}" Click="MoreClick" Style="{StaticResource MoreButton}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Border>
+
+            <!-- 快捷方式 8 格 -->
+            <Border Grid.Row="4" Margin="0,12,0,0" Padding="12,10" Background="#F3F6FA" CornerRadius="10">
+                <StackPanel>
+                    <TextBlock Text="快捷方式" FontSize="12" Foreground="#758197" Margin="0,0,0,8"/>
+                    <ItemsControl ItemsSource="{Binding Shortcuts}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="8"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="4" Background="White" CornerRadius="8" Padding="6,8"
+                                        Cursor="Hand" BorderBrush="#E2E8F0" BorderThickness="1"
+                                        MouseLeftButtonUp="ShortcutClick"
+                                        MouseRightButtonUp="ShortcutRightClick"
+                                        Tag="{Binding}" ToolTip="{Binding Target, Mode=OneWay}">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <Grid Width="36" Height="36" HorizontalAlignment="Center">
+                                            <TextBlock Text="+" FontSize="22" FontWeight="Light"
+                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                       Foreground="#A0AEC0"
+                                                       Visibility="{Binding IsEmpty, Converter={StaticResource BoolVisibilityConverter}}"/>
+                                            <Image Source="{Binding Icon, Mode=OneWay}" Stretch="Uniform"
+                                                   Width="28" Height="28"
+                                                   Visibility="{Binding IsEmpty, Converter={StaticResource InverseBoolVisibilityConverter}}"/>
+                                        </Grid>
+                                        <TextBlock Text="{Binding DisplayName, Mode=OneWay}" FontSize="10"
+                                                   Foreground="#4A5568" TextAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" MaxWidth="70" Margin="0,4,0,0"
+                                                   Visibility="{Binding IsEmpty, Converter={StaticResource InverseBoolVisibilityConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="5"
+                       Text="支持 VNC / RDP · 内置 TightVNC · 数据在本机 AppData"
+                       Foreground="#8994A5" FontSize="11" Margin="2,10,0,0"/>
+        </Grid>
+    </Grid>
+</Window>
